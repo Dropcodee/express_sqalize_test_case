@@ -1,6 +1,6 @@
 import Event from './entities/event.entity';
 import Workshop from './entities/workshop.entity';
-
+import { Op } from 'sequelize';
 export class EventsService {
   async getWarmupEvents() {
     return await Event.findAll();
@@ -167,6 +167,23 @@ export class EventsService {
     ```
      */
   async getFutureEventWithWorkshops() {
-    throw new Error('TODO task 2');
+    try {
+      Event.hasMany(Workshop, {
+        as: 'workshops',
+        foreignKey: 'eventId',
+      });
+
+      const events = await Event.findAll({
+        include: {
+          model: Workshop,
+          as: 'workshops',
+          where: { start: { [Op.gt]: new Date() } },
+        },
+        order: [[{ model: Workshop, as: 'workshops' }, 'id', 'ASC']],
+      });
+      return events;
+    } catch (error) {
+      throw new Error(error.message);
+    }
   }
 }
